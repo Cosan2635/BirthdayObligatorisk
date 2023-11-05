@@ -2,6 +2,7 @@ package com.example.birthdayobligatorisk
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,40 +17,77 @@ import com.example.birthdayobligatorisk.databinding.FragmentSecondBinding
 import com.example.birthdayobligatorisk.models.MyAdapter
 import com.example.birthdayobligatorisk.models.Person
 import com.example.birthdayobligatorisk.models.PersonsViewModel
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 
 class SecondFragment : Fragment() {
 
-    private lateinit var viewModel: PersonsViewModel
-    private lateinit var adapter: MyAdapter<Person>
+    private var _binding: FragmentSecondBinding? = null
+    private val binding get() = _binding!!
+    private val personsViewModel: PersonsViewModel by activityViewModels()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_second, container, false)
+        _binding = FragmentSecondBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(context)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        // Opret adapteren med en tom liste i starten
-        adapter = MyAdapter(emptyList()) { position ->
-            // Implementer handling, når et element i RecyclerView klikkes
-            // Du kan få adgang til det klikkede element ved at bruge adapter.getItem(position)
+        personsViewModel.personsLiveData.observe(viewLifecycleOwner) { persons ->
+            Log.d("APPLE", persons.toString())
+
+            binding.progressbar.visibility = View.GONE
+            binding.recyclerView.visibility = if (persons == null) View.GONE else View.VISIBLE
+
+            if (persons != null) {
+                val adapter = MyAdapter(persons) { position ->
+                    val action =
+                        SecondFragmentDirections.actionSecondFragmentTo.... (position)
+                    findNavController().navigate(action)
+                }
+                var columns = 2
+                val currentOrientation = this.resources.configuration.orientation
+                if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    columns = 4
+                } else if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+                    columns = 2
+                }
+                binding.recyclerView.layoutManager = GridLayoutManager(this.context, columns)
+                binding.recyclerView.adapter = adapter
+            }
         }
+        personsViewModel.errorMessageLiveData.observe(viewLifecycleOwner) { errorMessage ->
+            binding.textviewMessage.text = errorMessage
+        }
+        personsViewModel.reload()
 
-        recyclerView.adapter = adapter
+        binding.swiperefresh.setOnRefreshListener {
+            personsViewModel.reload()
+            binding.swiperefresh.isRefreshing = false
+        }
+        binding.buttonSort.setOnClickListener {
+            when (binding.spinnerPersons.selectedItemPosition) {
+                0 -> personsViewModel.sortByName()
+                1 -> personsViewModel.sortByAge()
+            }
+        }
+        binding.buttonSort.setOnClickListener {
+            val filter = binding.edittextFilterName.text.toString().trim()
+            if (filter.isBlank()) {
+                binding.edittextFilterName.error = "No title"
+                return@setOnClickListener
+            }
+            personsViewModel.sortByName()
+        }
+    }
 
-        // Initialiser PersonsViewModel
-        viewModel = ViewModelProvider(this).get(PersonsViewModel::class.java)
-
-        // Observer for at hente data fra ViewModel og opdatere RecyclerView
-        viewModel.personsLiveData.observe(viewLifecycleOwner, { persons ->
-            adapter.updateData(persons)
-        })
-
-        // Hent data fra REST API og opdater ViewModel ved behov
-        viewModel.reload()
-
-        return view
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
