@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "35798995707",
+    "project_id": "birthdayobligatorisk",
+    "storage_bucket": "birthdayobligatorisk.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35798995707:android:03c0a5230e36a6c1b4d65e",
+        "android_client_info": {
+          "package_name": "com.example.birthdayobligatorisk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOWfhh4O5n-rc08ECwntj9NAfCqYfsvOk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
